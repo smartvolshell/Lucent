@@ -1,0 +1,20 @@
+数据库命令  runCommand()
+	e.g. db.runCommand({"drop":"test"})-- 删除test集合
+	命令的响应结果是一个文档。
+	内部使用db.$cmd.findone({"drop":"test"})来在MongoDB中查找响应的命令。
+
+ -- listCommands -- 查看所有的命令
+ -- buildInfo  ({"buildInfo"：1}) -- 查看MongoDB的版本和主机系统信息。
+ -- collStats   ({"collStats":collection_name}) -- 查看集合的属性 
+ -- distinct  
+		 db.runCommand({"distinct":"accesslog","key":"deviceId","query":{"time":/^2011-12-15/}}).values.length(); 
+		==select count(deviceId) from (select distinct deviceId  from accesslog where time like "2011-12-15%") ; 
+		查询2011-12-15日，deviceId不同的总数。 
+ -- drop ({"drop",collection_name}) --删除集合
+ -- dropDatabase ({"dropDatabase":1}) --删除当前所有数据库的数据
+ -- dropIndexes  ({"dropIndexes":collection_name,"index":index_name}) --删除指定索引
+ -- isMaster  ({"isMaster":1}) 查看本服务器是主/从服务器
+ -- listDatabase  ({"listDatabase":1}) 所有可用的数据库
+ -- ping    ({"ping":1}) 是否连接成功
+ -- renameCollection  ({"renameCollection":a,"to"：b}) 集合重命名a -->b
+ -- serverStatus {"serverStatus"：1} 服务器的状态信息

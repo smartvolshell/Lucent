@@ -1,0 +1,49 @@
+text index 是为了方便search而建立的。
+必须建立在string或者string数组字段上面。
+
+在指定字段上添加全文索引
+	db.collection.ensureIndex({
+		subject:'text',
+		content:'text'
+	})
+	在subject和content上面创建了全文索引，同时也可以和下面的例子一样添加索引名。
+
+在全部字段上创建text index
+	db.collection.createIndex(
+				   { "$**": "text" },
+				   { name: "TextIndex" }
+				 )
+
+设置多个字段的权重：
+
+db.blog.ensureIndex(
+                     {
+                       content: "text",
+                       keywords: "text",
+                       about: "text"
+                     },
+                     {
+                       weights: {
+                                  content: 10,
+                                  keywords: 5,
+                                },
+                       name: "TextIndex"
+                     }
+                   )
+
+	
+
+    键 content 的权重为 10,
+    键 keywords 的权重为5,
+    键 about 的权重为默认值1。
+
+通过索引名来删除索引
+	db.collection.dropIndex('name')
+
+
+查询	
+db.collection.runCommand( "text", { search: <string>,
+                                    filter: <document>,
+                                    project: <document>,
+                                    limit: <number>,
+                                    language: <string> } )

@@ -1,0 +1,72 @@
+Sarding
+	MongoDB是能够自动分片。
+
+简介：
+	将海量的数据水平或垂直切割，分区存储到多台服务器上是一个最基本的现实需求。从 1.6 版开始，MongoDB Sharding 总算打上了 "production-ready" 标记。
+
+	MongoDB 的数据分块称为 chunk。每个 chunk 都是 Collection 中一段连续的数据记录，通常最大尺寸是 200MB，超出则生成新的数据块。
+	要构建一个 MongoDB Sharding Cluster，需要三种角色：
+
+		•Shard Server: mongod 实例，用于存储实际的数据块。
+		•Config Server: mongod 实例，存储了整个 Cluster Metadata，其中包括 chunk 信息。
+		•Route Server: mongos 实例，前端路由，客户端由此接入，且让整个集群看上去像单一进程数据库。
+
+	Route 转发请求到实际的目标服务进程，并将多个结果合并回传给客户端。Route 本身并不存储任何数据和状态，仅在启动时从 Config Server 获取信息。Config Server 上的任何变动都会传递给所有的 Route Process。
+
+	一般将Shard Server 配置为Replica Sets
+
+实验：
+	1、我们先构建一个简单的 Sharding Cluster，以熟悉相关的配置。
+		(1) 启动 Shard Server。 配置两台 Shard Server
+			mongod --shardsvr --port 10000 --dbpath= ....  --logpath=....
+			mongod --shardsvr --port 10001 --dbpath= ....  --logpath=....
+		(2) 启动 Config Server。
+			mongod --configsvr  --port 20000 --dbpath= ....  --logpath=....
+		(3) 启动 Route Process。
+			mongos --configdb  configsvr:20000  --logpath= .... --chunkSize 指定chunk的大小
+		(4) 连接到 Route，开始配置。
+			添加shard server
+				use admin
+				db.runCommand({ addshard:"localhost:10000" })
+				db.runCommand({ addshard:"localhost:10001" })
+					listshards 和 removeshard 分别为列出当前shard servers 和删除shard server
+
+			配置当前数据库可shard 
+				db.runCommand({ enablesharding:"test" })
+			配置当前数据库的shard 集合以及按照那个key经行shard.
+		【注】: Sharded Collection 只能有一个 unique index，且必须是 shard key。
+
+		管理：
+			listshards 命令列出所有的 Shard Server：
+				db.runCommand({ listshards: 1 }) 
+			或直接使用 printShardingStatus() 命令查看 Sharding 信息。
+			在shard集合上使用db.shard_coll.stats()也可查看。
+			isdbgrid 用来确认当前是否是 Sharding Cluster。
+
+	
+
+2、配置一个 Replica Sets + Sharding 测试环境。
+	1).配置Shard Server --- 构建Replica Sets
+		mongod --shardsvr  --logpath=... --dbpath=... --port 10001 --nohttpinterface --replSet set1
+		mongod --shardsvr  --logpath=... --dbpath=... --port 10002 --nohttpinterface --replSet set1
+		mongod --shardsvr  --logpath=... --dbpath=... --port 10003 --nohttpinterface --replSet set1
+
+		连接port 10001 -----mongo --port 10001
+		> cfg = { _id:'set1', members:[   --- 建立关联
+		... { _id:0, host:'shard-server:10001' },  
+		... { _id:1, host:'shard-server:10002' },  
+		... { _id:2, host:'shard-server:10003' }  
+		... ]}; 
+		> rs.initiate(cfg) ---- 初始化关联
+		> rs.status()  ---- 查看状态
+	2).配置 Shard Configuration Server 
+		mongod --configsvr  --logpath=... --dbpath=... --port 20000 --nohttpinterface
+	3).配置Route Server
+		mongos --fork --logpath /dev/null --configdb "config-server:20000" --如果有多个Conf-Server,则在引号内列出，逗号隔开。
+	4).开始sharding
+		use admin
+		db.runCommand({ addshard:'set1/shard-server:10001,shard-server:10002,shard-server:10003' }) --配置shard-server
+         	db.runCommand({ enablesharding:'test' }) --关联数据库
+		db.runCommand({ shardcollection:'test.data', key:{_id:1} })   -- 添加shard collection and shard key
+
+参阅：http://www.csdn.net/article/2011-03-30/294999

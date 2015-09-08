@@ -1,0 +1,58 @@
+配置sharding server ---> replica set
+
+mongod --dbpath=d:\workspace\data1\ --logpath=d:\workspace\log1\mongodb.log --logappend --shardsvr --port 20001 --replSet mySet
+
+mongod --dbpath=d:\workspace\data2\ --logpath=d:\workspace\log2\mongodb.log --logappend --shardsvr --port 20002 --replSet mySet
+
+mongod --dbpath=d:\workspace\data3\ --logpath=d:\workspace\log3\mongodb.log --logappend --shardsvr --port 20003 --replSet mySet
+
+登录其中的一台
+mongo --port 20001
+cfg = 
+{
+        "_id" : "mySet",
+        "members" : [
+                {
+                        "_id" : 0,
+                        "host" : "localhost:20001"
+                },
+                {
+                        "_id" : 1,
+                        "host" : "localhost:20002"
+                },
+                {
+                        "_id" : 2,
+                        "host" : "localhost:20003"
+                }
+        ]
+}
+rs.initiate(cfg)
+
+
+配置config server
+
+mongod --dbpath=d:\workspace\conf\ --logpath=d:\workspace\conf-log\mongodb.log --logappend --configsvr --port 30001 
+
+配置mongos
+mongos --dbpath=d:\workspace\data4\ --logpath=d:\workspace\log4\mongodb.log --logappend --configdb localhost:30001(如果多个config server,逗号分隔依次列出) --port 40001
+
+加入shard server,登录mongos(多个登录每一台)
+	db.runCommand({addshard:"myset1/127.0.0.1:20001,127.0.0.1:20002,127.0.0.1:20003"})
+	db.runCommand({addshard:"myset2/127.0.0.1:20001,127.0.0.1:20002,127.0.0.1:20003"})
+
+配置sharding db
+	db.runCommand({enablesharding:'test'})
+配置集合和片键
+	db.runCommand({shardcollection:’cl_name’,key:{_id:1}})
+
+
+
+
+
+
+Master/Slave
+	Master : mongod --dbpath=d:\workspace\master\ --logpath=d:\workspace\master_log\mongodb.log --logappend --port 20001 --master
+	Slave : mongod --dbpath=d:\workspace\slave1\ --logpath=d:\workspace\slave1_log\mongodb.log --logappend --port 30001 --slave --source localhost:20001
+	Slave : mongod --dbpath=d:\workspace\slave2\ --logpath=d:\workspace\slave2master_log\mongodb.log --logappend --port 30002 --slave --source localhost:20001
+
+	

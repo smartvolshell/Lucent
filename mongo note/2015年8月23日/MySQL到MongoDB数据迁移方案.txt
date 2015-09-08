@@ -1,0 +1,2 @@
+1、使用MongoVUE工具实现 ：http://blog.csdn.net/zzjjiandan/article/details/28854741
+2、先将MySQL数据导出为CSV格式，然后使用Mongoimport 实现导入。

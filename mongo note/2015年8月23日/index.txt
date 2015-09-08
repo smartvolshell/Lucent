@@ -1,0 +1,85 @@
+
+	详细说明
+准备文档：
+def insertValues(collection):
+    for i in range(30):
+        user = {
+                'name':'admin' + str(i),
+                'age':20 + i % 3,
+                'contact':{
+                           'address':['address1_' + str(i), 'address2_' + str(i)],
+                           'phone':10086 + i * 10 + i
+                           }
+                
+                }
+        collection.insert(user)
+索引信息被保存在 system.indexes 中，且默认总是为 _id 创建索引。
+1. ensureIndex / dropIndex / reIndex
+
+	使用 ensureIndex 创建索引，dropIndex() 删除索引，dropIndexes() 删除全部索引(不包括 _id 等系统索引)，reIndex 则是重建索引。
+2.创建索引是非常耗时耗力的活动，放入后台进行；
+	db.users.ensureIndex({"name":1},{"background":true})--否则会阻塞数据库来创建索引。
+
+3.explain
+	MongoDB 提供了一个 explain 命令让我们获知系统如何处理查询请求。
+	返回结果信息包括:
+
+	    cursor: 返回游标类型(BasicCursor 或 BtreeCursor)。
+	    nscanned: 被扫描的文档数量。
+	    n: 返回的文档数量。
+	    millis: 耗时(毫秒)。
+	    indexBounds: 所使用的索引。
+
+	利用 explain 命令，我们可以很好地观察系统如何使用索引来加快检索，同时可以针对性优化索引。
+
+4.Embedded Keys Index
+	我们可以创建深层索引，甚至直接用内嵌文档(sub-document)作为索引键。
+	db.users.ensureIndex({"contact.phone":1}) 
+5.Compound Keys Index
+	创建复合索引也很简单 (1: ascending; -1: descending)。db.users.ensureIndex({"name":1,"address":-1})
+6.Unique Index
+	只需在 ensureIndex 命令中指定 unique 即可创建唯一索引。db.users.ensureIndex({"username":1},{"unique":true})
+7.Multikeys
+	在数组类型属性建立索引，会自动索引全部数组元素。
+	db.users.ensureIndex({"address":1}) 
+
+8.hint
+	hint 命令可以强制使用某个索引。
+	db.users.find({age:{$lt:30}}).hint({name:1, age:1}).explain() 
+9.totalIndexSize
+	MongoDB 会将索引数据载入内存，以提高查询速度。我们可以用 totalIndexSize 获取全部索引数据大小。
+	db.users.totalIndexSize()  
+
+
+【索引类型】
+
+虽然MongoDB的索引在存储结构上都是一样的，但是根据不同的应用层需求，还是分成了唯一索引（unique）、稀疏索引（sparse）、多值索引（multikey）等几种类型。
+唯一索引
+
+	唯一索引在创建时加上unique:true 的选项即可，创建命令如下：
+
+	db.users.ensureIndex({username: 1}, {unique: true})
+
+	上面的唯一索引创建后，如果insert一条username已经存在的数据，则会报如下的错误：
+
+	E11000 duplicate key error index: gardening.users.$username_1 dup key: { : "kbanker" }
+
+	如果你在一个已有数据的collection上创建唯一索引，若唯一索引对应的字段原来就有重复的数据项，那么创建会失败，我们需要加上一个dropDups的选项来强制将重复的项删除掉，命令如下例：
+
+	db.users.ensureIndex({username: 1}, {unique: true, dropDups: true})
+
+松散索引
+
+	如果你的数据中一些行中没有某个字段或字段值为null，那么如果在这个字段上建立普通索引，那么无此字段或值null的行也会参与到索引结构中，占用相应的空间。如果我们不希望这些值为空的行参与到我们的索引中，这时候可以采用松散索引，松散索引只会让指定字段不为空的行参与到索引创建中来。创建一个松散索引可以用下面的命令：
+
+	db.reviews.ensureIndex({user_id: 1}, {sparse: true})
+
+多值索引
+
+	MongoDB可以对一个array类型创建索引，比如像下面的结构，MongoDB可以在tags字段上创建索引：
+
+	{ name: "Wheelbarrow",
+	tags: ["tools", "gardening", "soil"]
+	}
+
+	在生成索引时，会为tags中的三个值分别生成三个索引元素，索引中tools，gardening，soil三个值都会指向这同一行数据。相当于分裂成了三个独立的索引项。

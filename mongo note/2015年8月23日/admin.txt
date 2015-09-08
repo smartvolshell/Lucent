@@ -1,0 +1,16 @@
+1. --directoryperdb 参数让系统为每个 DB 创建一个独立子目录
+2. daemon
+	如果想以 Daemon 方式运行，需要同时使用 --fork、--logpath 参数。 
+3 --logappend 日志以递增方式呈现。
+4.configuration file
+	test.conf
+	dbpath = /var/mongodb
+	logpath = /var/test.log
+	logappend = true
+	fork = true
+	port = 1234 
+	启动：./mongod --config test.conf
+5.服务器状态信息
+	serverStatus
+6.当前数据库的状态信息
+	stats()

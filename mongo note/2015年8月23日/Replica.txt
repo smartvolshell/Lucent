@@ -1,0 +1,57 @@
+Replica Sets 备份方案。
+	
+副本集中的节点
+	standard 普通节点可以成为primary,可以参与投票。
+	passive  存储完整数据，参与投票，不能成为paimary
+	atbiter   仅仅参与投票。
+
+简介：1.6 版总算提供了 Replica Sets，比起有点莫名其妙的 Replica Pairs，这才是高可用集群所需要的。
+	副本之间的通信使用heartbeat
+
+
+1. Replica Sets（副本集）
+
+Replica Sets 使用 n 个 Mongod 节点，构建具备自动容错转移(auto-failover)、自动恢复(auto-recovery) 的高可用方案。
+	通常使用 3 个 mongod 实例，或者 2 mongod + 1 arbiter(仲裁者) 方案。
+	(1) 首先启动所需的 Mongod 节点。注意使用 replSet 参数指定所属 Sets Name。
+	./mongod --fork --logpath /dev/null --dbpath /var/mongodb/0 --port 27017 --replSet myset
+	./mongod --fork --logpath /dev/null --dbpath /var/mongodb/1 --port 27018 --replSet myset
+	./mongod --fork --logpath /dev/null --dbpath /var/mongodb/2 --port 27019 --replSet myset
+	(2) 使用 mongo 配置 Replica Sets。
+	> cfg = { _id: "myset", members: [  
+	... { _id:0, host:"localhost:27017" },  
+	... { _id:1, host:"localhost:27018" },  
+	... { _id:2, host:"localhost:27019" }  
+	... ]}  
+	 
+	如果添加arbiter:
+		{_id : 2, host : "10.250.7.220:28020", arbiterOnly: true}
+	> rs.initiate(cfg) 
+
+	使用rs.conf()查看是否配置成功。
+
+	配置成功的参数存储在local数据库中。
+	use local
+	show collections
+		oplog.rs  --- 日志文件
+		slaves  
+		system.indexes  
+		system.replset -- 配置信息
+	(3) 可以用 isMaster 和 status 命令查看 Replica Sets 状态。
+		在同一时刻，每组 Replica Sets 只有一个 Primary，用于接受写操作。而后会异步复制到其他成员数据库中。
+		一旦 primary 死掉，会自动投票选出接任的 primary 来，原服务器恢复后成为普通成员。如果数据尚未从先前的 primary 复制到成员服务器，有可能会丢失数据。
+
+	
+使用Client，conn = pymongo.Connection(host = ["localhost:27017", "localhost:27018", "localhost:27019", "localhost:27020"])
+	当primary down之后，会自动从剩余的中vote一个作为primary.
+	由于连接被中断，引发异常也很正常，不过 pymongo 会自动重新连接，再次操作时一切正常。
+
+
+恢复失败节点
+	mkdir /home/conan/dbs/repair/
+	mongod --dbpath=... --port 10001 --replSet setnname --logpath=... --repairpath=...
+
+刪除节点
+	rs.remove('localhost:port_num')
+添加新的节点：
+	rs.add('localhost:port_num')

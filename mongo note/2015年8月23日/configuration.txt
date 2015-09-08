@@ -1,0 +1,2 @@
+1、db.serverStatus() 
+	查看当前系统的状态信息。

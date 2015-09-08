@@ -1,0 +1,13 @@
+MongoDB与开源项目
+
+    MongoDB集成Hadoop进行统计计算
+    使用Fluentd + MongoDB构建实时日志收集系统
+    Karait：利用MongoDB Capped Collection构建的消息队列
+    MongoDB-Log：基于MongoDB的日志系统
+    MongoPress：一个MongoDB加PHP的开源CMS
+    射手分支项目-基于MongoDB的开源短网址服务
+    short：Node.js 与 MongoDB结合的开源短域名项目
+    基于MongoDB GridFS的图片存储
+    Graylog2：一个使用MongoDB的开源syslog存储系统
+    用MongoDB构建智能数据流过滤系统
+    使用MongoDB来实现web.py的session存储

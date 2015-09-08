@@ -1,0 +1,20 @@
+1、导出csv格式
+	通过mysql客户端shell连接到服务器，选择使用的数据库，输入sql代码： 
+
+	select * from test_info   
+	into outfile '/tmp/test.csv'   
+	fields terminated by ',' optionally enclosed by '"' escaped by '"'   
+	lines terminated by '\r\n'; 
+2、导入csv文件
+	cvs文件导入MySql数据库命令:
+	mysql> load data local infile 'e://input1.csv' REPLACE into table test1
+		fields terminated by ','
+		lines terminated by '/n'
+		ignore 1 lines
+		(column1,column2....)---指定文件中字段和表字段的对应
+
+注意事项：
+	导入的时候保证数据表已经建立。
+	导入时候，保证字段顺序的对应。
+	导入时候，保证字段/行分割使用类型相同
+

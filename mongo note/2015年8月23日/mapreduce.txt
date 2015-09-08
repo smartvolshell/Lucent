@@ -1,0 +1,55 @@
+db.runCommand(
+ { mapreduce : 字符串，集合名,
+   map : 函数,见下文
+   reduce : 函数，见下文
+   [, query : 文档，发往map函数前先给过渡文档]
+   [, sort : 文档，发往map函数前先给文档排序]
+   [, limit : 整数，发往map函数的文档数量上限]
+   [, out : 字符串，统计结果保存的集合]
+   [, keeptemp: 布尔值，链接关闭时临时结果集合是否保存]
+   [, finalize : 函数，将reduce的结果送给这个函数，做最后的处理]
+   [, scope : 文档,js代码中要用到的变量]
+   [, jsMode : 布尔值，是否减少执行过程中BSON和JS的转换，默认true] //注：false时 BSON-->JS-->map-->BSON-->JS-->reduce-->BSON,可处理非常大的mapreduce,<br>　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　//true时BSON-->js-->map-->reduce-->BSON
+   [, verbose : 布尔值，是否产生更加详细的服务器日志，默认true]
+ }
+);
+
+创建数据源：
+var i = 1
+while (i < 20){
+	db.table.insert({"_id":i,"name":"admin-"+i,"age":i%5});
+	i = i + 1;
+}
+
+这样就创建了一些数据
+接下来将统计相同年龄的人的姓名
+//定义map函数
+var m = function(){
+	emit(this.age,this.name);
+}
+【注解】emit的第一个参数是key，就是分组的依据，这是自然是age了，后一个是value，可以是要统计的数据
+
+//定义reduce函数
+var r = function(key,values){
+	var ret = {age:key,names:values};
+	return ret;
+}	
+【注解】reduce函数会处理每一个分组，参数也正好是我们想像分组里的key和values。
+
+//最后，还可以编写finalize函数对reduce的返回值做最后处理：
+var f = function(key,rval){
+	if( key == 0)
+		rval.msg = "a new life baby!";
+	return rval;
+}
+
+//运行最终程序
+db.runCommand({
+    mapreduce:"table",
+    map:m,
+    reduce:r,
+    finalize:f,
+    out:"table_age_names"
+    }
+)
+	

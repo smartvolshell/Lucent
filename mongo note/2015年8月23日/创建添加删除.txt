@@ -1,0 +1,47 @@
+1、插入 将插入的数据转换为BSON类型，再存入数据库（检查是否含有_id，文档大小的限制）
+	db.foo.insert(object)
+	批量插入 使用工具mongoimport
+2、删除
+	db.user.remove()
+3、文档的替换
+	db.user.update(),首先先查找到，然后在使用现有的替换。
+		db.user.update({"name":"joe"},new_joe)
+	增加指定字段(增加网页的访问量)
+		db.pages.update({"url":"www.baidu.com"},{"$inc":{"pageViews":1}})
+	更新多个文档：
+		{multi:true}
+4、插入新的字段
+	db.users.update({"name":"egger"},{"$set":{"hobby":"read"}})
+	"$set"用来指定一个键的值（当前查找到的文档）。如果这个键不存在，则创建它。
+	"$unset" 会将现有的值删除
+	使用.来实现修改内嵌文档
+	重命名：
+	 db.test.update({}, {$rename : {"abc" : "def"}}, false, true) 
+5、查找
+	find()/findOne()参数可选--查找文档中的某一个字段
+
+6、修改器的使用
+	$inc 指定字段的增加操作{"$inc":{"pageViews":1}} 自增1
+	$set 指定一个键的值，如果不存在则添加该键，存在则更新
+	数组修改器：$push --向指定数组中插入元素
+		    $addToOne 作用同$set,但是使用这个可以避免重复值的键入。
+		    $each --向数组中批量插入数据。可以和$push/$addToSet联合使用。
+			e.g.向person.emails数组中插入元素
+				db.users.update(
+						{"name":"user_name"},{"$push":
+							{"emails":{"$each":
+								["mail_1@163.com",
+								 "mail_2@163.com",
+								 "mail_3@163.com"]
+								 }
+							}
+						}
+						)
+
+7、upsert 如果没有符合更新条件的文档，就会以这个条件和更新文档为基础，创建一个新文档。
+
+8、修改集合名
+	db.oldcoll.rename('newname')
+9、修改key（列）名，
+	db.coll.update({},{$rename:{'old':'new'},false,true)
+		

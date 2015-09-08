@@ -1,0 +1,5 @@
+1、删除数据库
+	进入要删除的数据库 -- use test
+	删除               -- db.dropDatabase()
+2、删除collection
+	db.collection_name.drop()

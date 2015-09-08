@@ -1,0 +1,39 @@
+Sharding is the method MongoDB uses to split a large collection across several servers(called a cluster). 
+MongoDB does almost everything automatically.
+Goals of Sharding:
+	Make the cluster 'invisiable'
+		To accomplish this, MongoDB comes with a special routing process called mongos. 
+		mongos sits in front of your cluster and looks like an ordinary mongod server to anything that connects to it.
+		It forwards requests to the correct server or serversin the cluster, then assembles 聚集 their responses and sends them back to the client.
+		This makes it so that, in general, a client does not need to know that they’re talking to a cluster rather than a single server.
+
+		mongos  实现连接Client 与 mongo server,对Client 的request转发，收集请求，返回给client
+	Make the cluser always available to read and write
+		MongoDB ensures maximum uptime(正常运行时间) in a couple different ways. Every part of a
+		cluster can and should have at least some redundant processes running on other
+		machines (optimally in other data centers) so that if one process/machine/data
+		center goes down, the other ones can immediately (and automatically) pick up the
+		slack and keep going.
+	Let the cluster grow easily
+		MongoDB allows you to add as much capacity as you need as you need it.
+
+	As a chunk gets bigger, MongoDB will automatically split it into two smaller chunks. If the shards become unbalanced,
+chunks will be migrated to correct the imbalance.
+
+Blancer
+	The goal of the balancer is not only to keep the data evenly distributed but also to
+	minimize the amount of data transferred.不仅保证数据分配均衡，而且保证数据总转移量最小。
+
+片键的选择
+	小基数片键：
+		由于片键值数据量有限，因此这种片键成为小基数片键(low-cardinality shard key)。
+		如果选择了一个基数很小的片键，到头来肯定会得到一堆即巨大又无法移动，还不能分割的块，
+	升序片键：
+		新数据被访问的次数总比老数据多，这种分片方式可能导致数据（热点）会集中在后面的几个中，最终导致块增大而且无法再分。
+	随机片键
+		有时为了避免热点，人们会选择一个取值随机的字段来分片，采用这种片键一开始还不错，但是随着数据量越变越大，它会变得越来越慢。
+	
+	一个好的片键
+		许多应用访问新数据比老数据更频繁，所以我们希望数据大致上按照时间排序，但是同时也要均匀分布，这样一来既能把我们正在读写的数据保持在内存汇总，又可以使负载均衡地分散在集群中。
+		举个例子，比如说有个分析程序，用户会定期通过它访问过去一个月的数据，而我 们希望能尽可能保持数据易于使用，因此可以在{month:1,user:1}上分片，其中month是一个粗粒度的升序字段，即每个月它都会有一个更新更大的值；
+		user适合作为第二个字段，因为我们会经常查询某个特定用户的数据。

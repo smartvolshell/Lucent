@@ -1,0 +1,50 @@
+主从数据库，一台master 多台slave
+	所有的从节点都是从主节点上面复制数据，而不能在从节点上。
+原理：
+	主节点记录自己上面执行的所有操作，从节点定期轮询这些oplog(存储在local中),然后执行该oplog。
+master 的启动方式：
+	mongod --dbpath =... --logpath=... --master --port 10000 指定以master 运行，同时指定端口号。
+slave 的启动方式
+	mongod ----dbpath =... --logpath=... --slave --port 10001 --source server_ip:port 
+						指定自己的端口号，--source 指定master 的ip和端口
+选项：
+	--only -- 从节点只能复制特定的数据库
+	--slavedelay 应用在从节点上。
+	--fastsync 快速同步
+	--autoresync 自动式同步
+	--oplogsize 应用在主节点
+
+除了在启动的时候给slave添加源之外，还可以在运行时添加源
+	use local
+	db.sources.insert({'host':'localhost:port'})
+		
+删除源
+	db.sources.remove({'host':'localhost:port'})
+
+
+二、Master/Slave方案
+	Master/Slave 是一种典型的备份方案，MongoDB 支持 "One Master Multi Salver" 和 "Multi Master One Slave" 等多种部署方式。
+	master:
+		mongod --fork --logpath /dev/null --dbpath /var/mongodb/0 --master --port 27017
+	slave:
+		mongod --fork --logpath /dev/null --dbpath /var/mongodb/1 --port 27018 --slave --source localhost:27017 --autoresync
+
+		autoresync 参数会在系统发生意外情况造成主从数据不同步时，自动启动复制操作 (同步复制 10 分钟内仅执行一次)。除此之外，还可以用 --slavedelay 设定更新频率(秒)。
+	e.g.
+		C:\Users\hwang029>mongod  --dbpath=d:\MongoDB\data1\ --logpath=d:\MongoDB\logs\mongdb.log --master
+		C:\Users\hwang029>mongod --dbpath=d:\MongoDB\data2\ --logpath=d:\MongoDB\logs\mongodb.log --slave --port 27018 --source localhost:27017 --autoresync
+		登录master :
+			mongo localhost:27017
+		登录slave:
+			mongo localhost:27018
+	slave 只允许读数据，当mater down 之后，可以将本slave以master方式启动。
+
+阻塞复制
+	可以使用getLastError()会进入阻塞状态，直到N和服务器完成复制最新数据为止。
+		db.runCommand({getLastError:1,w:N})
+
+
+查看复制状态：
+	db.printReplicationInfo()
+指定oplog的大小
+	再启动的时候指定master 的oplog 的大小 --oplogSize size

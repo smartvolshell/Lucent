@@ -1,0 +1,8 @@
+普通创建的集合是隐式创建的而且是自动增长的
+创建固定大小的集合，需要显示的创建
+	 db.createCollection("fixedSize",{capped:true,size:100})
+	 db.createCollection("fixedSize",{capped:true,size:1000，max:100})
+
+自然排序
+	固定集合的排序方式--文档在磁盘上的顺序。
+	db.fixedSize.find().sort({"$natural":1}) 指定自然排序

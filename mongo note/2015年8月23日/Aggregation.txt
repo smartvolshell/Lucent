@@ -1,0 +1,7 @@
+聚集的实现
+	
+1、count()
+	db.foo.count() --统计文档的数量/统计符合条件的文档数量
+2、distinct
+	用来查找给定键的所有不同的值。此时必须指定集合和键
+	db.runCommand("distinct":"person","key":"age") 统计所有文档中有多少个年龄（消除重复）
