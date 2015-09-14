@@ -1,0 +1,15 @@
+查看MYSQL运行进程
+show processlist
+查看Innodb引擎运行情况：
+mysql>showinnodb status;
+
+查看MySQL参数情况：
+mysql>show [global] variables like '%innodb%';
+
+查看MySQL运行状态：
+mysql>show [global] status like '%thread%';
+
+查看表、存储过程、触发器：
+mysql>showtables;
+mysql>showprocedure status;  show create procedureUSP_Cursor;
+mysql>show triggers; show create trigger TRI_UP_User_Delete;
