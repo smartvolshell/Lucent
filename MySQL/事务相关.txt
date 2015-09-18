@@ -1,0 +1,18 @@
+开始事务 begin
+提交事务 commit
+	设置自动提交事务 set autocommit=1/0
+
+加锁
+	lock table table_name read/write
+	unlock tables;
+	
+	加锁是非线程安全的，在加锁的时候会自动提交所有的相关未提交的事务。
+
+事务的级别 
+	READ UNCOMMITED  允许脏读-- 一个事务读到另一事务未提交的更新数据
+	READ COMMITED    不允许脏读
+	REPEATABLE READ  可以重复读 一个事务读到另一事务已提交的更新数据
+	SERIALIZABLE     幻读  一个事务读到另一事务已提交的新插入的数据
+
+	http://singo107.iteye.com/blog/1175084
+

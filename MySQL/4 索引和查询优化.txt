@@ -1,0 +1,7 @@
+类型：
+	主键、唯一索引、全文索引、普通索引
+	【主键】 唯一,没有NULL
+		alter table table_name [modify id int not null,]add primary key (id); -- 修改
+	【普通索引】
+		create index on table_name(column_name...) --创建
+	
